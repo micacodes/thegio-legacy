@@ -1,11 +1,12 @@
+// path: apps/api/src/index.ts
 import express from 'express';
 import cors from 'cors';
 import { config } from './config';
 
-// Import routers
+// --- Corrected Import Paths ---
 import authRoutes from './modules/auth/auth.routes';
 import orderRoutes from './modules/orders/orders.routes';
-import templateRoutes from './modules/templates/routes';
+import templateRoutes from './modules/templates/templates.routes'; // Corrected filename
 import subscriptionRoutes from './modules/subscriptions/subscriptions.routes';
 
 const app = express();
@@ -13,7 +14,7 @@ const app = express();
 // --- Middleware ---
 app.use(cors({ origin: config.frontendUrl }));
 
-// Stripe webhook needs the raw body, so it comes before express.json()
+// Stripe webhook must come BEFORE express.json() to get the raw body
 app.use('/api/subscriptions/webhook', subscriptionRoutes);
 
 app.use(express.json());
@@ -22,8 +23,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/templates', templateRoutes);
-// All other subscription routes that need JSON parsing come after
-app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/subscriptions', subscriptionRoutes); // This handles the other subscription routes
 
 // --- Health Check ---
 app.get('/api/health', (req, res) => {
@@ -34,4 +34,3 @@ app.get('/api/health', (req, res) => {
 app.listen(config.port, () => {
   console.log(`🚀 Server running on http://localhost:${config.port}`);
 });
-
