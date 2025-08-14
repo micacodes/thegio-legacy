@@ -12,16 +12,15 @@ datasource db {
 model User {
   id               String   @id @default(cuid())
   email            String   @unique
+  username         String   @unique
+  phone            String?
   password         String?
   name             String?
   role             Role     @default(CUSTOMER)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  
   stripeCustomerId String?  @unique
-  
   googleId         String?  @unique
-
   orders           Order[]
   subscription     Subscription?
 }

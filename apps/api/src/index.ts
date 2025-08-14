@@ -2,6 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import { config } from './config';
+import uploadRoutes from './modules/uploads/uploads.routes'
 
 // --- Corrected Import Paths ---
 import authRoutes from './modules/auth/auth.routes';
@@ -24,11 +25,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/subscriptions', subscriptionRoutes); // This handles the other subscription routes
+app.use('/api/uploads', uploadRoutes);
+import path from 'path'; 
 
 // --- Health Check ---
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Thegio API is online' });
 });
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // --- Start Server ---
 app.listen(config.port, () => {

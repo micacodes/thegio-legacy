@@ -8,32 +8,39 @@ import { paymentService } from '../../services/paymentService';
 const prisma = new PrismaClient();
 
 export const register = async (req: Request, res: Response) => {
-  const { email, password, name } = req.body;
-  if (!email || !password) return res.status(400).json({ message: 'Email and password are required' });
+  const { email, password, name, username, phone } = req.body;
+
+  if (!email || !password || !name || !username) {
+    return res.status(400).json({ message: 'Name, username, email, and password are required' });
+  }
 
   try {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) return res.status(409).json({ message: 'User already exists' });
+    const existingUserByEmail = await prisma.user.findUnique({ where: { email } });
+    if (existingUserByEmail) {
+      return res.status(409).json({ message: 'A user with this email already exists' });
+    }
+
+    const existingUserByUsername = await prisma.user.findUnique({ where: { username } });
+    if (existingUserByUsername) {
+      return res.status(409).json({ message: 'This username is already taken' });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Create Stripe customer first
     const stripeCustomer = await paymentService.createStripeCustomer({ email, name });
 
-    // --- THIS IS THE FIX FOR PROBLEM 1 ---
-    // The placeholder /* ... */ is now replaced with the actual data object.
     const user = await prisma.user.create({
       data: {
         email,
+        username,
+        phone,
         password: hashedPassword,
         name,
         stripeCustomerId: stripeCustomer.id,
       },
     });
 
-    // Use await for the async generateToken function
     const token = await generateToken({ id: user.id, role: user.role });
-
     const { password: _, ...userWithoutPassword } = user;
     res.status(201).json({ user: userWithoutPassword, token });
   } catch (error) {
@@ -62,13 +69,10 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const getMe = async (req: Request, res: Response) => {
-  // --- THIS IS THE FIX FOR PROBLEM 2 ---
-  // The 'user' property is attached by the authMiddleware.
-  // The global type declaration in authMiddleware.ts makes this line valid.
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.user!.id }, // TypeScript now knows req.user exists.
-      select: { id: true, email: true, name: true, role: true, subscription: true },
+      where: { id: req.user!.id },
+      select: { id: true, email: true, name: true, role: true, username: true, subscription: true },
     });
     if (!user) {
         return res.status(404).json({ message: "User not found."});

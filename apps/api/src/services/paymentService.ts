@@ -1,3 +1,4 @@
+// path: apps/api/src/services/paymentService.ts
 import Stripe from 'stripe';
 import { config } from '../config';
 
@@ -21,13 +22,14 @@ export const paymentService = {
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
-      success_url: `${config.frontendUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${config.frontendUrl}/dashboard?subscription=success`,
       cancel_url: `${config.frontendUrl}/pricing`,
     });
     return session;
   },
 
-  createCheckoutSessionForOneTimePurchase: async (priceInCents: number, productName: string) => {
+  // --- UPDATED FUNCTION ---
+  createCheckoutSessionForOneTimePurchase: async (priceInCents: number, productName: string, metadata: Stripe.MetadataParam) => {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
@@ -39,7 +41,11 @@ export const paymentService = {
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: `${config.frontendUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+      // We attach our metadata here
+      payment_intent_data: {
+        metadata,
+      },
+      success_url: `${config.frontendUrl}/dashboard?order=success`,
       cancel_url: `${config.frontendUrl}/`,
     });
     return session;
