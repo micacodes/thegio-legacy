@@ -5,7 +5,7 @@ export interface Subscription {
   currentPeriodEnd: string;
 }
 
-// User Types
+// User Types - This is already correct
 export interface User {
   id: string;
   email: string;
@@ -25,7 +25,7 @@ export type SignUpCredentials = {
 
 export type LoginCredentials = Omit<SignUpCredentials, 'name' | 'username' | 'phone'>;
 
-// Template Types
+// Template Types - This is correct
 export interface Template {
   id: string;
   name: string;
@@ -40,11 +40,14 @@ export interface Order {
   type: 'DIY' | 'PREMIUM';
   amountPaid: number;
   createdAt: string;
-  userId?: string; // Add userId to be safe
-  template?: Template | null; // <-- This is the important addition
+  userId?: string;
+  template?: Template | null;
+  // --- THIS IS THE FIX ---
+  // The Order type now correctly includes the User object.
+  user?: User | null;
 }
 
-// Payment Types
+// Payment Types - This is correct
 export interface StripeCheckoutParams {
     type: 'DIY' | 'PREMIUM';
     amountInCents: number;
