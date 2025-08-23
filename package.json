@@ -1,15 +1,13 @@
 {
-  "name": "thegio-legacy-book-monorepo",
+  "name": "thegio-monorepo",
   "private": true,
+  "scripts": {
+    "dev": "npm run dev --workspace=web",
+    "build": "npm run build --workspace=web",
+    "start": "npm run start --workspace=web",
+    "dev:api": "npm run dev --workspace=api"
+  },
   "workspaces": [
     "apps/*"
-  ],
-  "scripts": {
-    "dev": "bun --filter ./apps/web dev",
-    "dev:api": "bun --filter ./apps/api dev"
-  },
-  "overrides": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  }
+  ]
 }
