@@ -25,6 +25,14 @@ export type SignUpCredentials = {
 
 export type LoginCredentials = Omit<SignUpCredentials, 'name' | 'username' | 'phone'>;
 
+// Template Types
+export interface Template {
+  id: string;
+  name: string;
+  description: string;
+  previewImgUrl: string;
+}
+
 // Order Types
 export interface Order {
   id: string;
@@ -32,14 +40,8 @@ export interface Order {
   type: 'DIY' | 'PREMIUM';
   amountPaid: number;
   createdAt: string;
-}
-
-// Template Types
-export interface Template {
-  id: string;
-  name: string;
-  description: string;
-  previewImgUrl: string;
+  userId?: string; // Add userId to be safe
+  template?: Template | null; // <-- This is the important addition
 }
 
 // Payment Types
