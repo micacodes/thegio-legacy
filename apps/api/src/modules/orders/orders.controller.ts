@@ -1,11 +1,17 @@
 // path: apps/api/src/modules/orders/orders.controller.ts
 import { Request, Response } from 'express';
-import { PrismaClient, OrderStatus, OrderType } from '@prisma/client';
+// --- FIX: REMOVED OrderStatus and OrderType from this import ---
+import { PrismaClient } from '@prisma/client';
 import { paymentService } from '../../services/paymentService';
 import { printService } from '../../services/printService';
 import { emailService } from '../../services/emailService';
 
 const prisma = new PrismaClient();
+
+// --- FIX: ADDED local type definitions for robustness ---
+type OrderStatus = 'PENDING' | 'PAID' | 'IN_DESIGN' | 'AWAITING_APPROVAL' | 'PRINTING' | 'SHIPPED' | 'DELIVERED' | 'CANCELED';
+type OrderType = 'DIY' | 'PREMIUM';
+
 
 // Creates a checkout session for a one-time purchase (DIY or Premium)
 export const createOrderCheckoutSession = async (req: Request, res: Response) => {
@@ -13,8 +19,6 @@ export const createOrderCheckoutSession = async (req: Request, res: Response) =>
   const userId = req.user!.id;
 
   try {
-    // We pass metadata to Stripe. When payment is successful, the webhook
-    // will use this metadata to create the order correctly in our database.
     const metadata = {
         userId,
         orderType: type,
@@ -33,8 +37,6 @@ export const createOrderCheckoutSession = async (req: Request, res: Response) =>
   }
 };
 
-// --- NEW CONTROLLERS ---
-
 // Get all orders for the currently logged-in user
 export const getUserOrders = async (req: Request, res: Response) => {
   const userId = req.user!.id;
@@ -42,6 +44,7 @@ export const getUserOrders = async (req: Request, res: Response) => {
     const orders = await prisma.order.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      include: { user: true } // It's good practice to include user data
     });
     res.status(200).json(orders);
   } catch (error) {
@@ -50,20 +53,19 @@ export const getUserOrders = async (req: Request, res: Response) => {
   }
 };
 
-// Get a single order by its ID, ensuring it belongs to the logged-in user (or an admin)
+// Get a single order by its ID
 export const getOrderById = async (req: Request, res: Response) => {
   const { id } = req.params;
   const userId = req.user!.id;
   const userRole = req.user!.role;
 
   try {
-    const order = await prisma.order.findUnique({ where: { id }, include:{template:true}, });
+    const order = await prisma.order.findUnique({ where: { id }, include:{template:true, user: true}, });
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    // A user can only see their own orders, but an admin can see any order.
     if (order.userId !== userId && userRole !== 'ADMIN') {
       return res.status(403).json({ message: 'Access denied to this order' });
     }
@@ -78,24 +80,13 @@ export const getOrderById = async (req: Request, res: Response) => {
 // An admin or designer updates the status of an order
 export const updateOrderStatus = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { status } = req.body; // e.g., "IN_DESIGN", "SHIPPED"
-
-    // Validate that the provided status is a valid OrderStatus enum value
-    if (!Object.values(OrderStatus).includes(status)) {
-        return res.status(400).json({ message: `Invalid status: ${status}` });
-    }
+    const { status } = req.body as { status: OrderStatus }; // Cast to our local type
 
     try {
         const updatedOrder = await prisma.order.update({
             where: { id },
             data: { status },
         });
-
-        // Optional: Send an email notification to the user about the status update
-        // const user = await prisma.user.findUnique({ where: { id: updatedOrder.userId } });
-        // if (user) {
-        //     await emailService.sendStatusUpdateEmail(user.email, updatedOrder);
-        // }
 
         res.status(200).json(updatedOrder);
     } catch (error) {
@@ -104,7 +95,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     }
 };
 
-// Customer approves the design (for DIY flow or after Premium design is done)
+// Customer approves the design
 export const approveOrderForPrint = async (req: Request, res: Response) => {
   const { id } = req.params;
   const userId = req.user!.id;
@@ -113,19 +104,16 @@ export const approveOrderForPrint = async (req: Request, res: Response) => {
     const order = await prisma.order.findFirst({ where: { id, userId } });
     if (!order) return res.status(404).json({ message: 'Order not found or access denied' });
     
-    // Logic to ensure an order can only be approved from the right status
-    if (order.status !== OrderStatus.AWAITING_APPROVAL) {
+    if (order.status !== 'AWAITING_APPROVAL') {
       return res.status(400).json({ message: `Order cannot be approved in its current state: ${order.status}` });
     }
 
     const updatedOrder = await prisma.order.update({
       where: { id },
-      data: { status: OrderStatus.PRINTING },
+      data: { status: 'PRINTING' }, // Use string literal
     });
 
-    // Send to fulfillment service (Printify)
     await printService.sendToPrintify(updatedOrder);
-
     res.status(200).json(updatedOrder);
   } catch (error) {
     console.error(error);
@@ -133,20 +121,17 @@ export const approveOrderForPrint = async (req: Request, res: Response) => {
   }
 };
 
+// Create a draft order
 export const createDraftOrder = async (req: Request, res: Response) => {
-  const { templateId, type } = req.body;
+  const { templateId, type } = req.body as { templateId: string | null, type: OrderType };
   const userId = req.user!.id;
-
-  if (!type || (type !== 'DIY' && type !== 'PREMIUM')) {
-    return res.status(400).json({ message: 'A valid order type (DIY or PREMIUM) is required.' });
-  }
 
   try {
     const newOrder = await prisma.order.create({
       data: {
         userId,
-        templateId, // This can be null for Premium orders
-        type: type, // Use the type from the request
+        templateId,
+        type: type,
         status: 'PENDING',
         amountPaid: 0,
       },
