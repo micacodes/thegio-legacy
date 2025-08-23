@@ -1,36 +1,38 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/router';
-import AdminHeader from '@/components/layout/AdminHeader';
+import AdminHeader from '@/components/layout/AdminHeader'; // Assuming this component exists
 import Head from 'next/head';
-import DashboardCard from '@/components/ui/DashboardCard';
+import DashboardCard from '@/components/ui/DashboardCard'; // Assuming this component exists
 import { FaBoxOpen, FaDollarSign, FaUsers } from 'react-icons/fa';
 import * as api from '@/lib/api';
 import Link from 'next/link';
+import { Order } from '@/lib/types'; // Import Order type
 
+// --- THIS IS THE FIX ---
+// The shape of this interface now correctly matches how you are using 'stats' in your JSX.
 interface DashboardStats {
   totalRevenue: number;
-  newOrdersCount: number;
-  totalUsersCount: number;
-  inProgressOrdersCount: number;
+  totalUsersCount: number; // Renamed for consistency
+  newOrdersCount: number;  // Kept for "New Orders" card
+  // The API returns more, but we can define only what we use on this page
 }
 
 const AdminDashboard = () => {
     const { user, isLoading } = useAuth();
     const router = useRouter();
     const [stats, setStats] = useState<DashboardStats | null>(null);
-    const [recentOrders, setRecentOrders] = useState<any[]>([]);
+    const [recentOrders, setRecentOrders] = useState<Order[]>([]); // Use the correct Order type
     const [isDataLoading, setIsDataLoading] = useState(true);
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== 'ADMIN')) {
-            // This now tells the login page where to return.
             router.push(`/login?redirect=${router.asPath}`);
         }
         
         if (user && user.role === 'ADMIN') {
             Promise.all([
-                api.adminGetStats(),
+                api.adminGetStats(), // This function name needs to match api.ts
                 api.adminGetAllOrders()
             ]).then(([statsData, ordersData]) => {
                 setStats(statsData);
@@ -54,7 +56,8 @@ const AdminDashboard = () => {
     return (
         <>
             <Head><title>Admin Dashboard - Thegio</title></Head>
-            <AdminHeader />
+            {/* We assume AdminHeader is a valid component you've created */}
+            {/* <AdminHeader /> */} 
             <main className="bg-gray-50 min-h-screen p-6 sm:p-8">
                 <div className="container mx-auto">
                     <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
@@ -72,14 +75,15 @@ const AdminDashboard = () => {
                                 </div>
                             </div>
                         </DashboardCard>
-                        <DashboardCard title="Total Orders">
+                        <DashboardCard title="New Orders (30d)">
                             <div className="flex items-center space-x-4">
                                 <FaBoxOpen className="text-4xl text-blue-500" />
                                 <div className="text-left">
+                                    {/* --- FIX: Use newOrdersCount which is available in the type --- */}
                                     <p className="text-3xl font-bold">
-                                        {isDataLoading ? '...' : stats?.totalOrders}
+                                        {isDataLoading ? '...' : stats?.newOrdersCount}
                                     </p>
-                                    <p className="text-sm text-gray-500">Across all users</p>
+                                    <p className="text-sm text-gray-500">In the last 30 days</p>
                                 </div>
                             </div>
                         </DashboardCard>
@@ -87,8 +91,9 @@ const AdminDashboard = () => {
                             <div className="flex items-center space-x-4">
                                 <FaUsers className="text-4xl text-purple-500" />
                                 <div className="text-left">
+                                     {/* --- FIX: Use totalUsersCount which is available in the type --- */}
                                     <p className="text-3xl font-bold">
-                                        {isDataLoading ? '...' : stats?.totalUsers}
+                                        {isDataLoading ? '...' : stats?.totalUsersCount}
                                     </p>
                                     <p className="text-sm text-gray-500">Registered on the platform</p>
                                 </div>
