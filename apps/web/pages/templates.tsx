@@ -19,29 +19,33 @@ const TemplatesPage = () => {
   }, [user, isLoading, router]);
 
   useEffect(() => {
-    api.getTemplates()
-      .then(data => {
-        setTemplates(data);
-        setLoadingTemplates(false);
-      })
-      .catch(error => {
-        console.error('Failed to fetch templates:', error);
-        setLoadingTemplates(false);
-      });
-  }, []);
+    if (user) { // Only fetch templates if the user is logged in
+      api.getTemplates()
+        .then(data => {
+          setTemplates(data);
+        })
+        .catch(error => {
+          console.error('Failed to fetch templates:', error);
+        })
+        .finally(() => {
+          setLoadingTemplates(false);
+        });
+    } else if (!isLoading) {
+      setLoadingTemplates(false);
+    }
+  }, [user, isLoading]);
 
   const handleSelectTemplate = async (templateId: string) => {
     try {
-      // Create a new project (Order) in the backend and get its ID
-      const newOrder = await api.createDraftOrder(templateId);
+      // --- THIS IS THE FIX ---
+      // We are now passing the second required argument: the type 'DIY'.
+      const newOrder = await api.createDraftOrder(templateId, 'DIY');
       const projectId = newOrder.id;
       
-      // Redirect the user to the editor page for their new project
       router.push(`/editor/${projectId}`);
     } catch (error) {
       console.error("Failed to create project:", error);
       alert("There was an error creating your project. Please try again.");
-      // The loading state on the button will be reset because the page didn't change
     }
   };
 
