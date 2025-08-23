@@ -1,8 +1,5 @@
 // path: apps/web/lib/types.ts
 
-// --- THIS IS THE FIX ---
-// We are defining the possible OrderStatus values on the frontend,
-// so we don't need to import them from the backend.
 export type OrderStatus = 'PENDING' | 'PAID' | 'IN_DESIGN' | 'AWAITING_APPROVAL' | 'PRINTING' | 'SHIPPED' | 'DELIVERED' | 'CANCELED';
 
 export interface Subscription {
@@ -42,7 +39,7 @@ export interface Template {
 // Order Types
 export interface Order {
   id: string;
-  status: OrderStatus; // It now uses our locally defined OrderStatus type
+  status: OrderStatus;
   type: 'DIY' | 'PREMIUM';
   amountPaid: number;
   createdAt: string;
@@ -57,4 +54,9 @@ export interface StripeCheckoutParams {
     amountInCents: number;
     productName: string;
     templateId?: string;
+    // --- THIS IS THE FIX ---
+    // We are adding the optional fields that the premium upload page needs to send.
+    // The '?' makes them optional, so our DIY flow (which doesn't use them) still works.
+    contentJson?: string;
+    shippingAddressJson?: string;
 }
