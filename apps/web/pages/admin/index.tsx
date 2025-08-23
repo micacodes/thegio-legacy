@@ -9,9 +9,10 @@ import * as api from '@/lib/api';
 import Link from 'next/link';
 
 interface DashboardStats {
-  totalOrders: number;
-  totalUsers: number;
   totalRevenue: number;
+  newOrdersCount: number;
+  totalUsersCount: number;
+  inProgressOrdersCount: number;
 }
 
 const AdminDashboard = () => {
