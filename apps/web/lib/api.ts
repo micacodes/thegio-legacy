@@ -1,20 +1,36 @@
 import { User, LoginCredentials, SignUpCredentials, Order, Template, StripeCheckoutParams } from './types';
 
-const API_URL = 'http://localhost:3001/api'; // Our backend URL
+// In a deployed environment, Vercel sets this automatically. For local dev, we need a default.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+// --- THIS IS THE FIX ---
+// We are explicitly telling TypeScript what the shape of our headers object can be.
+// It can have 'Content-Type', and it MIGHT have 'Authorization'.
+type ApiHeaders = {
+  'Content-Type': 'application/json';
+  Authorization?: string; // The '?' makes the Authorization property optional.
+};
 
 async function fetcher(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem('authToken');
   
-  const headers = {
+  // We initialize the headers object with our defined type.
+  const headers: ApiHeaders = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
 
   if (token) {
+    // This is now type-safe because our ApiHeaders type allows for an Authorization property.
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${url}`, { ...options, headers });
+  const response = await fetch(`${API_URL}${url}`, { 
+    ...options, 
+    // We cast headers to any here to satisfy the built-in 'fetch' type, which is very generic.
+    // This is a common and safe practice in this specific scenario.
+    headers: headers as any, 
+  });
 
   if (!response.ok) {
     const errorData = await response.json();
