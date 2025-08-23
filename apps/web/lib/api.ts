@@ -1,34 +1,26 @@
 import { User, LoginCredentials, SignUpCredentials, Order, Template, StripeCheckoutParams } from './types';
 
-// In a deployed environment, Vercel sets this automatically. For local dev, we need a default.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
-// --- THIS IS THE FIX ---
-// We are explicitly telling TypeScript what the shape of our headers object can be.
-// It can have 'Content-Type', and it MIGHT have 'Authorization'.
 type ApiHeaders = {
   'Content-Type': 'application/json';
-  Authorization?: string; // The '?' makes the Authorization property optional.
+  Authorization?: string;
 };
 
 async function fetcher(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem('authToken');
   
-  // We initialize the headers object with our defined type.
   const headers: ApiHeaders = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
 
   if (token) {
-    // This is now type-safe because our ApiHeaders type allows for an Authorization property.
     headers['Authorization'] = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_URL}${url}`, { 
     ...options, 
-    // We cast headers to any here to satisfy the built-in 'fetch' type, which is very generic.
-    // This is a common and safe practice in this specific scenario.
     headers: headers as any, 
   });
 
@@ -114,13 +106,14 @@ export const adminGetOrderDetails = (orderId: string): Promise<Order> => {
 };
 
 export const adminUpdateOrderStatus = (orderId: string, status: string): Promise<Order> => {
-  return fetcher(`/orders/${orderId}/status`, {
+  return fetcher(`/admin/orders/${orderId}/status`, { // Corrected path
     method: 'PATCH',
     body: JSON.stringify({ status }),
   });
 };
 
-export const getAdminStats = (): Promise<{
+// --- THIS IS THE MISSING FUNCTION THAT IS NOW RESTORED ---
+export const adminGetStats = (): Promise<{
   totalRevenue: number;
   newOrdersCount: number;
   totalUsersCount: number;
