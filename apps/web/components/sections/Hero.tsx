@@ -35,7 +35,7 @@ const Hero = () => {
             <Button onClick={handleStartBookClick}>Start Your Book</Button>
             
             {/* --- UPDATED BUTTON (now a Link) --- */}
-            <Link href="/#templates" passHref>
+            <Link href="/templates" passHref>
               <Button variant="outline">See Examples</Button>
             </Link>
           </div>
@@ -43,7 +43,7 @@ const Hero = () => {
         <div className="flex justify-center">
           {/* You need to have this image in your apps/web/public/ folder */}
           <Image 
-            src="/book-mockup.png" 
+            src="/assets/legacythegio.jpg" 
             alt="Mockup of a Thegio legacy book" 
             width={350} 
             height={450} 

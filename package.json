@@ -1,0 +1,15 @@
+{
+  "name": "thegio-legacy-book-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "bun --filter ./apps/web dev",
+    "dev:api": "bun --filter ./apps/api dev"
+  },
+  "overrides": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

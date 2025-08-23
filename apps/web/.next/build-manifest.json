@@ -27,15 +27,15 @@
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/dashboard": [
+    "/checkout/[projectId]": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/dashboard.js"
+      "static/chunks/pages/checkout/[projectId].js"
     ],
-    "/pricing": [
+    "/submit-content/[orderId]": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/pricing.js"
+      "static/chunks/pages/submit-content/[orderId].js"
     ]
   },
   "ampFirstPages": []

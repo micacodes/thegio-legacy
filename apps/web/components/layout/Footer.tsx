@@ -27,18 +27,16 @@ const Footer = () => {
 
           <div>
             <h3 className="font-semibold tracking-wider uppercase text-gray-200">Services</h3>
-            {/* --- CHANGE 2: Reduced space between links from space-y-3 to space-y-2 --- */}
             <ul className="mt-4 space-y-2 text-sm">
               <li><Link href="#pricing" className="text-gray-400 hover:text-white transition-colors">DIY Design</Link></li>
               <li><Link href="#pricing" className="text-gray-400 hover:text-white transition-colors">Premium Service</Link></li>
-              <li><Link href="#templates" className="text-gray-400 hover:text-white transition-colors">Templates</Link></li>
+              <li><Link href="/templates" className="text-gray-400 hover:text-white transition-colors">Templates</Link></li>
               <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Printing</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="font-semibold tracking-wider uppercase text-gray-200">Support</h3>
-            {/* --- CHANGE 2: Reduced space between links --- */}
             <ul className="mt-4 space-y-2 text-sm">
               <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Help Center</Link></li>
               <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link></li>

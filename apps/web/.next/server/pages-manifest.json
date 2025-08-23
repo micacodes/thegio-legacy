@@ -2,8 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/signup": "pages/signup.js",
-  "/dashboard": "pages/dashboard.js",
+  "/checkout/[projectId]": "pages/checkout/[projectId].js",
   "/": "pages/index.js",
-  "/pricing": "pages/pricing.js"
+  "/submit-content/[orderId]": "pages/submit-content/[orderId].js"
 }

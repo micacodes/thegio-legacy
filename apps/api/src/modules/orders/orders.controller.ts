@@ -57,7 +57,7 @@ export const getOrderById = async (req: Request, res: Response) => {
   const userRole = req.user!.role;
 
   try {
-    const order = await prisma.order.findUnique({ where: { id } });
+    const order = await prisma.order.findUnique({ where: { id }, include:{template:true}, });
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -130,5 +130,30 @@ export const approveOrderForPrint = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to approve order', error });
+  }
+};
+
+export const createDraftOrder = async (req: Request, res: Response) => {
+  const { templateId, type } = req.body;
+  const userId = req.user!.id;
+
+  if (!type || (type !== 'DIY' && type !== 'PREMIUM')) {
+    return res.status(400).json({ message: 'A valid order type (DIY or PREMIUM) is required.' });
+  }
+
+  try {
+    const newOrder = await prisma.order.create({
+      data: {
+        userId,
+        templateId, // This can be null for Premium orders
+        type: type, // Use the type from the request
+        status: 'PENDING',
+        amountPaid: 0,
+      },
+    });
+    res.status(201).json(newOrder);
+  } catch (error) {
+    console.error('Failed to create draft order:', error);
+    res.status(500).json({ message: 'Could not create your project.' });
   }
 };

@@ -121,7 +121,7 @@ const DashboardPage = () => {
             {/* Sidebar Column */}
             <div className="space-y-8">
               <DashboardCard title="Quick Actions">
-                <Link href="/pricing">
+                <Link href="/templates">
                   <Button className="w-full flex items-center justify-center space-x-2 text-base">
                     <FaPlusCircle />
                     <span>Create a New Book</span>

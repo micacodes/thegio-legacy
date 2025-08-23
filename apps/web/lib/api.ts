@@ -73,3 +73,69 @@ export const uploadPremiumFiles = async (formData: FormData): Promise<{ storyFil
   }
   return response.json();
 };
+
+export const getOrderById = (orderId: string): Promise<Order> => {
+  return fetcher(`/orders/${orderId}`);
+};
+
+// --- Admin Endpoints ---
+export const adminGetAllOrders = (): Promise<Order[]> => {
+  return fetcher('/admin/orders');
+};
+
+export const adminGetOrderDetails = (orderId: string): Promise<Order> => {
+  return fetcher(`/admin/orders/${orderId}`);
+};
+
+export const adminUpdateOrderStatus = (orderId: string, status: string): Promise<Order> => {
+  return fetcher(`/orders/${orderId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+};
+
+
+
+// --- NEW ANALYTICS FUNCTIONS ---
+export const getAdminStats = (): Promise<{
+  totalRevenue: number;
+  newOrdersCount: number;
+  totalUsersCount: number;
+  inProgressOrdersCount: number;
+}> => {
+  return fetcher('/admin/stats');
+};
+
+export const getAdminChartData = (): Promise<{ date: string; count: number }[]> => {
+  return fetcher('/admin/chart-data');
+};
+
+
+export const createDraftOrder = (templateId: string | null, type: 'DIY' | 'PREMIUM'): Promise<Order> => {
+  return fetcher('/orders/draft', { method: 'POST', body: JSON.stringify({ templateId, type }) });
+};
+
+export const adminGetStats = (): Promise<{ totalOrders: number; totalUsers: number; totalRevenue: number; }> => {
+  return fetcher('/admin/stats');
+};
+
+export interface User {
+  id: string;
+  email: string;
+  username: string; // Already here, but good to confirm
+  name?: string | null; // Make sure 'name' is included and can be null
+  role: 'CUSTOMER' | 'DESIGNER' | 'ADMIN';
+}
+
+export interface Order {
+  id: string;
+  status: 'PENDING' | 'PAID' | 'IN_DESIGN' | 'AWAITING_APPROVAL' | 'PRINTING' | 'SHIPPED' | 'DELIVERED' | 'CANCELED';
+  type: 'DIY' | 'PREMIUM';
+  amountPaid: number;
+  createdAt: string;
+  template?: Template | null; 
+}
+
+export const initiateMpesaPayment = (data: { amount: number; phone: string; orderId: string; }): Promise<any> => {
+  return fetcher('/payments/mpesa/initiate', { method: 'POST', body: JSON.stringify(data) })
+};

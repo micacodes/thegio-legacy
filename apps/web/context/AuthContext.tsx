@@ -1,4 +1,3 @@
-// path: apps/web/context/AuthContext.tsx
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { useRouter } from 'next/router';
 import * as api from '@/lib/api';
@@ -41,7 +40,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userData = await api.loginUser(credentials);
     localStorage.setItem('authToken', userData.token);
     setUser(userData.user);
-    router.push('/dashboard');
+
+    // This is the new intelligent redirect logic.
+    const redirectPath = router.query.redirect as string | undefined;
+
+    if (redirectPath) {
+      router.push(redirectPath);
+      return;
+    }
+
+    if (userData.user.role === 'ADMIN' || userData.user.role === 'DESIGNER') {
+      router.push('/admin');
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   const signup = async (details: SignUpCredentials) => {

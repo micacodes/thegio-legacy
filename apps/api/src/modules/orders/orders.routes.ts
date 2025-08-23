@@ -6,6 +6,7 @@ import {
     getOrderById,
     updateOrderStatus,
     approveOrderForPrint,
+    createDraftOrder,
 } from './orders.controller';
 import { authMiddleware } from '../../middleware/authMiddleware';
 import { adminMiddleware } from '../../middleware/adminMiddleware';
@@ -13,6 +14,7 @@ import { adminMiddleware } from '../../middleware/adminMiddleware';
 const router = Router();
 
 // --- Customer Routes ---
+router.post('/draft', authMiddleware, createDraftOrder);
 router.post('/create-checkout-session', authMiddleware, createOrderCheckoutSession);
 router.get('/', authMiddleware, getUserOrders); // Get all my orders
 router.get('/:id', authMiddleware, getOrderById); // Get a specific order
