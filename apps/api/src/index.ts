@@ -1,7 +1,7 @@
 // path: apps/api/src/index.ts
 import express from 'express';
 import cors from 'cors';
-import path from 'path'; 
+import path from 'path';
 import { config } from './config';
 
 // --- All Route Imports ---
@@ -16,48 +16,60 @@ import { registerDarajaUrls } from './services/darajaUrlService';
 
 const app = express();
 
-// --- THIS IS THE FIX ---
-// We now allow multiple origins: your live Netlify frontend and your local frontend.
+/**
+ * ✅ CORS FIX
+ * Allow both your Netlify frontend & local frontend.
+ * Also handle preflight OPTIONS requests properly.
+ */
 const allowedOrigins = [
   'https://thegiolegacybooks.netlify.app',
-  'http://localhost:3000' 
+  'http://localhost:3000',
 ];
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    if (!origin) {
+      // Allow requests like Postman with no origin
+      return callback(null, true);
     }
-  }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true, // ✅ allow cookies & auth headers
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-// Use the new, more flexible CORS configuration
+// Apply CORS globally
 app.use(cors(corsOptions));
-// -----------------------
 
-// Stripe webhook must come BEFORE express.json()
-// We also need to add the correct /api prefix for the live server
+// Handle preflight requests (important for browsers)
+app.options('*', cors(corsOptions));
+
+/**
+ * ✅ Stripe webhook
+ * Must come BEFORE express.json() because Stripe sends raw body
+ */
 app.use('/api/subscriptions/webhook', subscriptionRoutes);
 
-// This middleware is for parsing JSON bodies in requests
+// Middleware to parse JSON
 app.use(express.json());
 
-// This middleware is for serving static files (like images)
+// Static file serving
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// --- API Route Registration ---
-// All routes are prefixed with /api
+// --- API Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/templates', templateRoutes);
-app.use('/api/subscriptions', subscriptionRoutes); 
+app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
 
-// --- Health Check Route ---
+// --- Health Check ---
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Thegio API is online' });
 });
