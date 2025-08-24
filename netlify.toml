@@ -1,9 +1,12 @@
-# This configuration tells Netlify to ONLY build the Next.js frontend.
-
 [build]
-  # Tell Netlify where the frontend app lives.
-  base = "apps/web"
-  # The standard build command for a Next.js app.
-  command = "bun run build"
-  # The output directory for the built frontend.
+  command = "npm run build"
   publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "18"  # or "20" depending on your needs
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  node_bundler = "esbuild"
