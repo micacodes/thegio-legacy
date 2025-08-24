@@ -19,15 +19,32 @@ const allowedOrigins = [
   'https://thegiolegacybooks.netlify.app',
   'http://localhost:3000'
 ];
+
+// --- FIX STARTS HERE ---
+// The CORS configuration has been enhanced to properly handle preflight requests.
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('This origin is not allowed by CORS'));
     }
-  }
+  },
+  // Explicitly specify which methods are allowed.
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  // Explicitly specify which headers are allowed.
+  // 'Content-Type' is needed for your POST request. 
+  // 'Authorization' is common for APIs that use tokens.
+  allowedHeaders: "Content-Type,Authorization",
+  // This is required if your frontend needs to send cookies or auth headers.
+  credentials: true, 
+  // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  // but the standard success status for a preflight request is 204 No Content.
+  optionsSuccessStatus: 204
 };
+// --- FIX ENDS HERE ---
+
 app.use(cors(corsOptions));
 
 // The Stripe webhook is a special case that needs the raw body.
