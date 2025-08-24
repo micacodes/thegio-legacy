@@ -1,8 +1,13 @@
-[build]
-  base = "apps/web"
-  command = "bun install && bun run build:static"
-  publish = "apps/web/out"
+# Netlify configuration for Thegio frontend only.
 
+[build]
+  # Build only the frontend app
+  command = "cd apps/web && bun install && bun run build"
+
+  # Publish the Next.js build output
+  publish = "apps/web/.next"
+
+# Redirect all routes to Next.js (SSR)
 [[redirects]]
   from = "/*"
   to = "/index.html"
