@@ -1,24 +1,14 @@
-# This is the configuration file for Netlify.
-# It tells Netlify how to build a monorepo.
-
+# This is the command to build the entire monorepo.
+# It will run from the root of your project.
 [build]
-  # This is the build command for the frontend Next.js app.
-  # Netlify will run this command from the 'base' directory.
-  command = "bun run build"
-  # The folder where the frontend app is located.
-  base = "apps/web"
-  # The output directory for the built frontend.
-  publish = ".next"
+  command = "cd apps/api && bun install && bun run build && cd ../../ && cd apps/web && bun install && bun run build"
+  # This is the output directory for your frontend.
+  publish = "apps/web/.next"
+  # This is the output directory for your compiled backend function.
+  functions = "apps/api/build"
 
-# This section tells Netlify where to find and how to build our backend.
-[functions]
-  # The directory where our serverless function source code is located.
-  directory = "apps/api/src"
-  # This command runs BEFORE Netlify bundles the function.
-  # It installs the API's dependencies and generates the Prisma client.
-  prebuild = "cd ../../ && bun install --frozen-lockfile --production=false --prefix apps/api && cd apps/api && npx prisma generate"
-
-# This rule redirects all API calls from the frontend to our single backend function.
+# This rule redirects all API calls to our backend function.
+# The function will be named after its file, which is 'serverless.js' after compilation.
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/serverless/:splat"

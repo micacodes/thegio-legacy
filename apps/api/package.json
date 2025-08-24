@@ -4,7 +4,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "build:netlify": "tsc --outDir ../../netlify/functions/serverless",
     "start": "node build/index.js",
     "db:push": "prisma db push"
