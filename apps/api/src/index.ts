@@ -15,7 +15,6 @@ import { registerDarajaUrls } from './services/darajaUrlService';
 
 const app = express();
 
-// --- Definitive CORS Configuration ---
 const allowedOrigins = [
   'https://thegiolegacybooks.netlify.app',
   'http://localhost:3000'
@@ -30,37 +29,31 @@ const corsOptions: cors.CorsOptions = {
   }
 };
 app.use(cors(corsOptions));
-// ------------------------------------
 
-// --- Middleware ---
-app.use(express.json()); // General JSON parser first
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// --- THE DEFINITIVE ROUTING FIX ---
 // The Stripe webhook is a special case that needs the raw body.
 // It must be defined BEFORE the general router and it MUST have the /api prefix.
 app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), subscriptionRoutes);
 
-// Now, we create a master router for ALL other API endpoints.
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// We create a master router for ALL other API endpoints.
 const apiRouter = express.Router();
 
-// Register all specific routes onto the master router (WITHOUT the /api prefix).
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/orders', orderRoutes);
 apiRouter.use('/templates', templateRoutes);
 apiRouter.use('/payments', paymentRoutes);
 apiRouter.use('/uploads', uploadRoutes);
 apiRouter.use('/admin', adminRoutes);
-// The rest of the subscription routes go here as well.
 apiRouter.use('/subscriptions', subscriptionRoutes); 
 
 apiRouter.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', version: '1.4.0' }); // New fingerprint
+  res.status(200).json({ status: 'OK', version: '1.5.0_FINAL' }); // FINAL FINGERPRINT
 });
 
-// Finally, we mount the entire collection of routes under the single `/api` prefix.
+// We mount the entire collection of routes under the single `/api` prefix.
 app.use('/api', apiRouter);
-// ------------------------------------
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, async () => {
