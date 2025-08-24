@@ -1,14 +1,9 @@
-# Netlify configuration for Thegio frontend only.
+# This configuration tells Netlify to ONLY build the Next.js frontend.
 
 [build]
-  # Build only the frontend app
-  command = "cd apps/web && bun install && bun run build"
-
-  # Publish the Next.js build output
-  publish = "apps/web/.next"
-
-# Redirect all routes to Next.js (SSR)
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  # Tell Netlify where the frontend app lives.
+  base = "apps/web"
+  # The standard build command for a Next.js app.
+  command = "bun run build"
+  # The output directory for the built frontend.
+  publish = ".next"
