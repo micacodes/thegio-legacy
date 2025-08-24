@@ -1,6 +1,7 @@
 import { User, LoginCredentials, SignUpCredentials, Order, Template, StripeCheckoutParams } from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// The base URL for the backend, WITHOUT the /api part.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 type ApiHeaders = {
   'Content-Type': 'application/json';
@@ -19,18 +20,28 @@ async function fetcher(url: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${url}`, { 
+  // --- THIS IS THE FIX ---
+  // We now consistently add the /api prefix to every single request.
+  const response = await fetch(`${API_BASE_URL}/api${url}`, { 
     ...options, 
     headers: headers as any, 
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'An API error occurred');
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'An API error occurred');
+    } else {
+        // If the response is not JSON (like a 404 HTML page), throw a generic error.
+        throw new Error(`Server returned a non-JSON response with status ${response.status}.`);
+    }
   }
 
   return response.json();
 }
+
+// --- ALL OTHER FUNCTIONS BELOW REMAIN THE SAME AND WILL NOW WORK CORRECTLY ---
 
 // --- Auth Endpoints ---
 export const registerUser = (data: SignUpCredentials): Promise<{ user: User; token: string }> => {
@@ -81,7 +92,7 @@ export const initiateMpesaPayment = (data: { amount: number; phone: string; orde
 // --- File Upload Endpoint ---
 export const uploadPremiumFiles = async (formData: FormData): Promise<{ storyFileUrl: string; photoZipUrl: string; }> => {
   const token = localStorage.getItem('authToken');
-  const response = await fetch(`${API_URL}/uploads/premium-files`, {
+  const response = await fetch(`${API_BASE_URL}/api/uploads/premium-files`, { // Also fixed here
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -106,13 +117,12 @@ export const adminGetOrderDetails = (orderId: string): Promise<Order> => {
 };
 
 export const adminUpdateOrderStatus = (orderId: string, status: string): Promise<Order> => {
-  return fetcher(`/admin/orders/${orderId}/status`, { // Corrected path
+  return fetcher(`/admin/orders/${orderId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   });
 };
 
-// --- THIS IS THE MISSING FUNCTION THAT IS NOW RESTORED ---
 export const adminGetStats = (): Promise<{
   totalRevenue: number;
   newOrdersCount: number;
