@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "npm run dev --workspace=web",
+    "export": "next export",
     "build": "npm run build --workspace=web",
     "start": "npm run start --workspace=web"
   },
