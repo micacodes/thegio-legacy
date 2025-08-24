@@ -2,28 +2,40 @@
 import serverless from 'serverless-http';
 import express from 'express';
 import cors from 'cors';
-// 'path' and 'config' are not needed in this serverless entrypoint,
-// as the individual modules will import 'config' themselves.
 
-// Import ALL routers
+// ... (all your route imports)
 import authRoutes from './modules/auth/auth.routes';
-import orderRoutes from './modules/orders/orders.routes';
-import templateRoutes from './modules/templates/templates.routes';
-import subscriptionRoutes from './modules/subscriptions/subscriptions.routes';
-import paymentRoutes from './modules/payments/payments.routes';
-import uploadRoutes from './modules/uploads/uploads.routes';
-// --- FIX: Corrected import path for admin routes ---
-import adminRoutes from './modules/admin/admin.routes'; 
+// ... etc ...
 
 const app = express();
 
-// --- Middleware Setup ---
-// These are applied to all routes that follow.
-app.use(cors({ origin: '*' })); // Use a more permissive CORS for serverless
+// --- THIS IS THE FIX ---
+// We are explicitly telling the server which frontend URL is allowed to access it.
+const allowedOrigins = [
+  'https://thegiolegacybooks.netlify.app',
+  'http://localhost:3000' // It's good practice to keep localhost for local testing
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+};
+
+// Use the configured CORS options
+app.use(cors(corsOptions));
+// -----------------------
+
 app.use(express.json());
 
 // --- API Route Registration ---
-// The routes are registered directly on the 'app' instance.
+// In a serverless setup, we don't need a router or path prefix here.
 app.use('/auth', authRoutes);
 app.use('/orders', orderRoutes);
 app.use('/templates', templateRoutes);
@@ -31,13 +43,6 @@ app.use('/subscriptions', subscriptionRoutes);
 app.use('/uploads', uploadRoutes);
 app.use('/admin', adminRoutes);
 app.use('/payments', paymentRoutes);
+app.use('/health', (req, res) => res.status(200).json({ status: 'OK' }));
 
-// --- Health Check Route ---
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Thegio API is online' });
-});
-
-// --- THIS IS THE FIX ---
-// The `netlify.toml` handles the `/api` prefix. This file should not.
-// The `serverless-http` wrapper takes care of the rest.
 export const handler = serverless(app);
