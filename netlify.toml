@@ -1,13 +1,13 @@
 [build]
-  command = "cd web && npm run build"
-  publish = "web/.next"
+  command = "npm run build --workspace=web"
+  publish = "web/.next" 
 
 [build.environment]
+  NEXT_TELEMETRY_DISABLED = "1"
   NODE_VERSION = "18"
 
-# REMOVE the plugin section entirely - you don't need it!
-# [[plugins]]
-#   package = "@netlify/plugin-nextjs"
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 [functions]
   node_bundler = "esbuild"
