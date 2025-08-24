@@ -9,5 +9,13 @@
   },
   "workspaces": [
     "apps/*"
-  ]
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "netlify": {
+    "build": {
+      "use": "@netlify/plugin-nextjs@false"
+    }
+  }
 }

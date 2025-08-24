@@ -1,13 +1,15 @@
 [build]
-  command = "npm run build --workspace=web"
-  publish = "web/.next" 
+  command = "cd apps/web && npm install && npm run build"
+  publish = "apps/web/.next"
 
 [build.environment]
-  NEXT_TELEMETRY_DISABLED = "1"
   NODE_VERSION = "18"
+  NEXT_TELEMETRY_DISABLED = "1"
 
+# EXPLICITLY disable the Next.js plugin to prevent auto-detection
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+  enabled = false
 
 [functions]
   node_bundler = "esbuild"
