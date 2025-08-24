@@ -1,9 +1,0 @@
-[build]
-  # Start in the web app folder
-  base = "apps/web"
-  
-  # Install deps + build frontend
-  command = "bun install && bun run build"
-  
-  # Path to built frontend (Next.js output)
-  publish = ".next"
