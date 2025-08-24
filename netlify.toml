@@ -1,0 +1,19 @@
+# This is the final, correct configuration for the Thegio monorepo on Netlify.
+
+[build]
+  # This single command runs from the ROOT of your project.
+  # It builds the backend first, then the frontend.
+  command = "cd apps/api && bun install && bun run build && cd ../.. && cd apps/web && bun install && bun run build"
+  
+  # This is the path to the finished frontend, from the root.
+  publish = "apps/web/.next"
+  
+  # This is the path to the compiled backend functions, from the root.
+  functions = "apps/api/build"
+
+# This rule directs all API traffic to our backend function.
+# 'serverless.js' is the compiled output of our 'serverless.ts' file.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/serverless/:splat"
+  status = 200
