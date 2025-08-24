@@ -4,7 +4,6 @@ import cors from 'cors';
 import path from 'path'; 
 import { config } from './config';
 
-// Import all routers
 import authRoutes from './modules/auth/auth.routes';
 import orderRoutes from './modules/orders/orders.routes';
 import templateRoutes from './modules/templates/templates.routes';
@@ -34,33 +33,32 @@ app.use(cors(corsOptions));
 // ------------------------------------
 
 // --- Middleware ---
-// IMPORTANT: The Stripe webhook has a very specific path and needs the raw body.
-// We handle it here, BEFORE the general /api router.
-app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), subscriptionRoutes);
-
-// General JSON parser for all other routes
-app.use(express.json()); 
+app.use(express.json()); // General JSON parser first
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // --- THE DEFINITIVE ROUTING FIX ---
-// We create a master router and attach all other routes to it.
+// The Stripe webhook is a special case that needs the raw body.
+// It must be defined BEFORE the general router and it MUST have the /api prefix.
+app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), subscriptionRoutes);
+
+// Now, we create a master router for ALL other API endpoints.
 const apiRouter = express.Router();
 
+// Register all specific routes onto the master router (WITHOUT the /api prefix).
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/orders', orderRoutes);
 apiRouter.use('/templates', templateRoutes);
 apiRouter.use('/payments', paymentRoutes);
 apiRouter.use('/uploads', uploadRoutes);
 apiRouter.use('/admin', adminRoutes);
-// Note: We leave '/subscriptions' out of this main router because the webhook is handled separately.
-// If you have other subscription routes like '/create-checkout-session', they should be added here.
+// The rest of the subscription routes go here as well.
 apiRouter.use('/subscriptions', subscriptionRoutes); 
 
 apiRouter.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', version: '1.3.0' }); // New fingerprint
+  res.status(200).json({ status: 'OK', version: '1.4.0' }); // New fingerprint
 });
 
-// We mount the entire collection of routes under the `/api` prefix.
+// Finally, we mount the entire collection of routes under the single `/api` prefix.
 app.use('/api', apiRouter);
 // ------------------------------------
 
