@@ -1,0 +1,17 @@
+# This is the single source of truth for our Netlify build.
+
+[build]
+  # This command runs from the root of the repository.
+  command = "cd apps/api && bun install && bun run build && cd ../../ && cd apps/web && bun install && bun run build"
+  
+  # This is the path to the finished frontend, relative to the root.
+  publish = "apps/web/.next"
+  
+  # This is the path to the finished backend functions, relative to the root.
+  functions = "apps/api/build"
+
+# This rule directs all API traffic to our backend function.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/serverless/:splat"
+  status = 200
