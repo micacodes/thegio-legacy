@@ -5,9 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 import * as api from '@/lib/api';
 import { Order } from '@/lib/types';
 import Button from '@/components/ui/Button';
-import { FaBookOpen, FaFeatherAlt, FaImages, FaRegLightbulb } from 'react-icons/fa';
+import { FaImages } from 'react-icons/fa';
 
-// --- NEW HELPER COMPONENT for a consistent section style ---
 const FormSection = ({ step, title, subtitle, children }: { step: number; title: string; subtitle: string; children: React.ReactNode }) => (
   <div className="grid md:grid-cols-3 gap-8 items-start py-8 border-b last:border-b-0">
     <div className="md:col-span-1">
@@ -36,8 +35,35 @@ const SubmitContentPage = () => {
   const [photos, setPhotos] = useState<FileList | null>(null);
   const [designerNotes, setDesignerNotes] = useState('');
 
+  // --- THIS IS THE FIX ---
+  // The useEffect hook is now filled with the correct logic.
   useEffect(() => {
-    // ... (useEffect logic remains the same)
+    // 1. Protect the route from non-logged-in users
+    if (!isAuthLoading && !user) {
+      if (orderId) { router.push(`/login?redirect=/submit-content/${orderId}`); }
+    }
+
+    // 2. Fetch the project data if the user is logged in and we have an orderId
+    if (user && typeof orderId === 'string') {
+      api.getOrderById(orderId)
+        .then(data => {
+          // 3. Security check: make sure the user owns this order
+          if (data.userId !== user.id) {
+            router.push('/dashboard'); // If not, send them away
+          } else {
+            setOrder(data);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch order", err);
+          // If order not found, redirect to dashboard
+          router.push('/dashboard');
+        })
+        .finally(() => {
+          // 4. CRITICAL: Set loading to false so the page can render
+          setIsLoading(false);
+        });
+    }
   }, [user, isAuthLoading, orderId, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,12 +73,10 @@ const SubmitContentPage = () => {
         return;
     }
     
+    // In the future, this is where the actual file upload logic will go.
     console.log("Submitting content for order:", orderId);
-    console.log("Title:", bookTitle);
-    console.log("Story:", storyContent);
-    console.log("Photos:", photos);
-    console.log("Notes:", designerNotes);
-
+    
+    // After "submission", redirect to the checkout page.
     router.push(`/checkout/${orderId}`);
   };
 
@@ -75,7 +99,6 @@ const SubmitContentPage = () => {
             
             <form onSubmit={handleSubmit} className="bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-gray-100">
               
-              {/* --- Section 1: Book Title --- */}
               <FormSection step={1} title="Book Title" subtitle="Give your masterpiece a name.">
                 <input 
                   type="text" 
@@ -83,11 +106,10 @@ const SubmitContentPage = () => {
                   value={bookTitle}
                   onChange={(e) => setBookTitle(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-md text-xl focus:ring-2 focus:ring-brand-orange focus:outline-none"
-                  placeholder="Inga's Legacy"
+                  placeholder="Inga Kimaru Family Legacy"
                 />
               </FormSection>
 
-              {/* --- Section 2: Story Content --- */}
               <FormSection step={2} title="Your Story" subtitle="Paste your full story, letters, or any text here.">
                 <textarea 
                   id="storyContent"
@@ -99,7 +121,6 @@ const SubmitContentPage = () => {
                 />
               </FormSection>
 
-              {/* --- Section 3: Photo Uploads --- */}
               <FormSection step={3} title="Upload Photos" subtitle="Select all the high-quality images you want to include.">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 hover:border-brand-orange transition-colors">
                   <FaImages className="mx-auto text-4xl text-gray-400 mb-4" />
@@ -120,7 +141,6 @@ const SubmitContentPage = () => {
                 </div>
               </FormSection>
 
-              {/* --- Section 4: Designer Notes --- */}
               <FormSection step={4} title="Designer Notes" subtitle="Any special instructions? (e.g., 'Make the cover B&W').">
                 <textarea 
                   id="designerNotes"
