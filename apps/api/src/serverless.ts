@@ -2,8 +2,8 @@
 import serverless from 'serverless-http';
 import express from 'express';
 import cors from 'cors';
-import path from 'path'; 
-import { config } from './config';
+// 'path' and 'config' are not needed in this serverless entrypoint,
+// as the individual modules will import 'config' themselves.
 
 // Import ALL routers
 import authRoutes from './modules/auth/auth.routes';
@@ -12,33 +12,32 @@ import templateRoutes from './modules/templates/templates.routes';
 import subscriptionRoutes from './modules/subscriptions/subscriptions.routes';
 import paymentRoutes from './modules/payments/payments.routes';
 import uploadRoutes from './modules/uploads/uploads.routes';
-import adminRoutes from './modules-admin/admin.routes';
+// --- FIX: Corrected import path for admin routes ---
+import adminRoutes from './modules/admin/admin.routes'; 
 
 const app = express();
 
-// Use a router to prefix all routes with /api
-const router = express.Router();
-
 // --- Middleware Setup ---
-router.use(cors({ origin: '*' })); // Use a more permissive CORS for serverless
-router.use(express.json());
+// These are applied to all routes that follow.
+app.use(cors({ origin: '*' })); // Use a more permissive CORS for serverless
+app.use(express.json());
 
 // --- API Route Registration ---
-router.use('/auth', authRoutes);
-router.use('/orders', orderRoutes);
-router.use('/templates', templateRoutes);
-router.use('/subscriptions', subscriptionRoutes); 
-router.use('/uploads', uploadRoutes);
-router.use('/admin', adminRoutes);
-router.use('/payments', paymentRoutes);
+// The routes are registered directly on the 'app' instance.
+app.use('/auth', authRoutes);
+app.use('/orders', orderRoutes);
+app.use('/templates', templateRoutes);
+app.use('/subscriptions', subscriptionRoutes); 
+app.use('/uploads', uploadRoutes);
+app.use('/admin', adminRoutes);
+app.use('/payments', paymentRoutes);
 
 // --- Health Check Route ---
-router.get('/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Thegio API is online' });
 });
 
-// Mount the router with the /api prefix
-app.use('/api/', router);
-
-// Export the handler for Netlify
+// --- THIS IS THE FIX ---
+// The `netlify.toml` handles the `/api` prefix. This file should not.
+// The `serverless-http` wrapper takes care of the rest.
 export const handler = serverless(app);
