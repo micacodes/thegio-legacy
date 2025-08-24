@@ -1,3 +1,4 @@
+// path: apps/api/src/index.ts
 import express from 'express';
 import cors from 'cors';
 import path from 'path'; 
@@ -14,8 +15,6 @@ import { registerDarajaUrls } from './services/darajaUrlService';
 
 const app = express();
 
-// --- THE DEFINITIVE CORS FIX ---
-// This explicitly allows your live frontend URL.
 const allowedOrigins = [
   'https://thegiolegacybooks.netlify.app',
   'http://localhost:3000'
@@ -23,52 +22,41 @@ const allowedOrigins = [
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like Postman) or from our allowed list
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('This origin is not allowed by CORS'));
     }
-  },
-  credentials: true, // Add this if you're using cookies/auth tokens
-  optionsSuccessStatus: 200 // For legacy browser support
+  }
 };
 
-// Use the correct and final CORS configuration
 app.use(cors(corsOptions));
 
-// Handle preflight requests for all routes
-app.options('*', cors(corsOptions)); // THIS IS THE CRITICAL FIX
-// ------------------------------------
+// --- THIS IS THE FIX ---
+// Create a master router for all API endpoints.
+const apiRouter = express.Router();
 
-// Stripe webhook must come BEFORE express.json()
-// We add the /api prefix to match the live server's path structure
-app.use('/api/subscriptions/webhook', subscriptionRoutes);
+// Register all specific routes onto the master router.
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/orders', orderRoutes);
+apiRouter.use('/templates', templateRoutes);
+apiRouter.use('/subscriptions', subscriptionRoutes); 
+apiRouter.use('/uploads', uploadRoutes);
+apiRouter.use('/admin', adminRoutes);
+apiRouter.use('/payments', paymentRoutes);
+apiRouter.use('/health', (req, res) => res.status(200).json({ status: 'OK', version: '1.2.1' }));
 
-app.use(express.json());
+// Mount the master router at the /api prefix.
+app.use('/api', apiRouter);
+// -----------------------
+
+// Stripe webhook is a special case that needs the raw body
+// It needs to be registered on the app itself, BEFORE the main JSON parser.
+app.use('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), subscriptionRoutes);
+
+app.use(express.json()); // General JSON parser for other routes
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// All routes are prefixed with /api
-app.use('/api/auth', authRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/templates', templateRoutes);
-app.use('/api/subscriptions', subscriptionRoutes); 
-app.use('/api/uploads', uploadRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/payments', paymentRoutes);
-
-app.get('/api/health', (req, res) => {
-  // --- THE "FINGERPRINT" ---
-  // This proves the new code is deployed.
-  res.status(200).json({ 
-    status: 'OK', 
-    message: 'Thegio API is online',
-    version: '1.2.1' // Updated version number for this fix
-  });
-});
-
-// For Render, we need to read the port from the environment.
-// config.port is likely trying to use a value from .env which might not exist on Render.
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, async () => {
