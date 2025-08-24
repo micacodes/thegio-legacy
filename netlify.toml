@@ -1,14 +1,18 @@
-# This is the command to build the entire monorepo.
-# It will run from the root of your project.
+# This is the corrected configuration for a monorepo on Netlify.
+
 [build]
+  # We run the command from the root of the project.
+  # This single command handles the setup and build for both the API and the Web app.
   command = "cd apps/api && bun install && bun run build && cd ../../ && cd apps/web && bun install && bun run build"
-  # This is the output directory for your frontend.
+  
+  # This is the output directory for your frontend. Netlify needs the full path from the root.
   publish = "apps/web/.next"
-  # This is the output directory for your compiled backend function.
+  
+  # This is the output directory for your compiled backend function(s).
   functions = "apps/api/build"
 
-# This rule redirects all API calls to our backend function.
-# The function will be named after its file, which is 'serverless.js' after compilation.
+# This rule redirects all /api requests to our backend function.
+# Netlify will automatically find the main handler file (e.g., serverless.js) in the functions directory.
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/serverless/:splat"
