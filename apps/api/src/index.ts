@@ -1,4 +1,3 @@
-// path: apps/api/src/index.ts
 import express from 'express';
 import cors from 'cors';
 import path from 'path'; 
@@ -30,11 +29,16 @@ const corsOptions: cors.CorsOptions = {
     } else {
       callback(new Error('This origin is not allowed by CORS'));
     }
-  }
+  },
+  credentials: true, // Add this if you're using cookies/auth tokens
+  optionsSuccessStatus: 200 // For legacy browser support
 };
 
 // Use the correct and final CORS configuration
 app.use(cors(corsOptions));
+
+// Handle preflight requests for all routes
+app.options('*', cors(corsOptions)); // THIS IS THE CRITICAL FIX
 // ------------------------------------
 
 // Stripe webhook must come BEFORE express.json()
@@ -59,7 +63,7 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     message: 'Thegio API is online',
-    version: '1.2.0' // New version number for this fix
+    version: '1.2.1' // Updated version number for this fix
   });
 });
 
